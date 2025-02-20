@@ -1,192 +1,38 @@
-# The Mempool Open Source Project
+# The Mempool Open Source Project® [![mempool](https://img.shields.io/endpoint?url=https://dashboard.cypress.io/badge/simple/ry4br7/master&style=flat-square)](https://dashboard.cypress.io/projects/ry4br7/runs)
 
-Mempool is the fully featured visualizer, explorer, and API service running on [mempool.space](https://mempool.space/), an open source project developed and operated for the benefit of the Bitcoin community, with a focus on the emerging transaction fee market to help our transition into a multi-layer ecosystem.
+https://user-images.githubusercontent.com/93150691/226236121-375ea64f-b4a1-4cc0-8fad-a6fb33226840.mp4
 
-![mempool](https://mempool.space/resources/screenshots/v2.2.0-dashboard.png)
+<br>
 
-## Installation Methods
+Mempool is the fully-featured mempool visualizer, explorer, and API service running at [mempool.space](https://mempool.space/). 
 
-Mempool can be self-hosted on a wide variety of your own hardware, ranging from a simple one-click installation on a Raspberry Pi distro, all the way to an advanced high availability cluster of powerful servers for a production instance. We support the following installation methods, ranked in order from simple to advanced:
+It is an open-source project developed and operated for the benefit of the Bitcoin community, with a focus on the emerging transaction fee market that is evolving Bitcoin into a multi-layer ecosystem.
 
-1) One-click installation on: [Umbrel](https://github.com/getumbrel/umbrel), [RaspiBlitz](https://github.com/rootzoll/raspiblitz), [RoninDojo](https://code.samourai.io/ronindojo/RoninDojo), or [MyNode](https://github.com/mynodebtc/mynode).
-2) [Docker installation on Linux using docker-compose](https://github.com/mempool/mempool/tree/master/docker)
-3) [Manual installation on Linux or FreeBSD](https://github.com/mempool/mempool#manual-installation)
-4) [Production installation on a powerful FreeBSD server](https://github.com/mempool/mempool/tree/master/production)
-5) [High Availability cluster using powerful FreeBSD servers](https://github.com/mempool/mempool/tree/master/production#high-availability)
+# Installation Methods
 
-# Manual Installation
+Mempool can be self-hosted on a wide variety of your own hardware, ranging from a simple one-click installation on a Raspberry Pi full-node distro all the way to a robust production instance on a powerful FreeBSD server. 
 
-The following instructions are for a manual installation on Linux or FreeBSD. The file and directory paths may need to be changed to match your OS.
+Most people should use a <a href="#one-click-installation">one-click install method</a>.
 
-## Dependencies
+Other install methods are meant for developers and others with experience managing servers. If you want support for your own production instance of Mempool, or if you'd like to have your own instance of Mempool run by the mempool.space team on their own global ISP infrastructure—check out <a href="https://mempool.space/enterprise" target="_blank">Mempool Enterprise®</a>.
 
-* Bitcoin Core (no pruning, txindex=1)
-* Electrum Server (romanz/electrs)
-* NodeJS (official stable LTS)
-* MariaDB (default config)
-* Nginx (use supplied nginx.conf and nginx-mempool.conf)
+<a id="one-click-installation"></a>
+## One-Click Installation
 
-## Mempool
+Mempool can be conveniently installed on the following full-node distros: 
+- [Umbrel](https://github.com/getumbrel/umbrel)
+- [RaspiBlitz](https://github.com/rootzoll/raspiblitz)
+- [RoninDojo](https://code.samourai.io/ronindojo/RoninDojo)
+- [myNode](https://github.com/mynodebtc/mynode)
+- [StartOS](https://github.com/Start9Labs/start-os)
+- [nix-bitcoin](https://github.com/fort-nix/nix-bitcoin/blob/a1eacce6768ca4894f365af8f79be5bbd594e1c3/examples/configuration.nix#L129)
 
-Clone the mempool repo, and checkout the latest release tag:
-```bash
-  git clone https://github.com/mempool/mempool
-  cd mempool
-  latestrelease=$(curl -s https://api.github.com/repos/mempool/mempool/releases/latest|grep tag_name|head -1|cut -d '"' -f4)
-  git checkout $latestrelease
-```
+**We highly recommend you deploy your own Mempool instance this way.** No matter which option you pick, you'll be able to get your own fully-sovereign instance of Mempool up quickly without needing to fiddle with any settings.
 
-## Bitcoin Core (bitcoind)
+## Advanced Installation Methods
 
-Enable RPC and txindex in `bitcoin.conf`:
-```bash
-  rpcuser=mempool
-  rpcpassword=71b61986da5b03a5694d7c7d5165ece5
-  txindex=1
-```
+Mempool can be installed in other ways too, but we only recommend doing so if you're a developer, have experience managing servers, or otherwise know what you're doing.
 
-## MySQL
-
-Install MariaDB from OS package manager:
-```bash
-  # Linux
-  apt-get install mariadb-server mariadb-client
-
-  # macOS
-  brew install mariadb
-  brew services start mariadb
-```
-
-Create database and grant privileges:
-```bash
-  MariaDB [(none)]> drop database mempool;
-  Query OK, 0 rows affected (0.00 sec)
-
-  MariaDB [(none)]> create database mempool;
-  Query OK, 1 row affected (0.00 sec)
-
-  MariaDB [(none)]> grant all privileges on mempool.* to 'mempool'@'%' identified by 'mempool';
-  Query OK, 0 rows affected (0.00 sec)
-```
-
-From the mempool repo's top-level folder, import the database structure:
-```bash
-  mysql -u mempool -p mempool < mariadb-structure.sql
-```
-
-## Mempool Backend
-Install mempool dependencies from npm and build the backend:
-
-```bash
-  # backend
-  cd backend
-  npm install
-  npm run build
-```
-
-In the `backend` folder, make a copy of the sample config and modify it to fit your settings.
-
-```bash
-  cp mempool-config.sample.json mempool-config.json
-```
-
-Edit `mempool-config.json` to add your Bitcoin Core node RPC credentials:
-```bash
-{
-  "MEMPOOL": {
-    "NETWORK": "mainnet",
-    "BACKEND": "electrum",
-    "HTTP_PORT": 8999,
-    "API_URL_PREFIX": "/api/v1/",
-    "POLL_RATE_MS": 2000
-  },
-  "CORE_RPC": {
-    "USERNAME": "mempool",
-    "PASSWORD": "71b61986da5b03a5694d7c7d5165ece5"
-  },
-  "ELECTRUM": {
-    "HOST": "127.0.0.1",
-    "PORT": 50002,
-    "TLS_ENABLED": true,
-  },
-  "DATABASE": {
-    "ENABLED": true,
-    "HOST": "127.0.0.1",
-    "PORT": 3306,
-    "USERNAME": "mempool",
-    "PASSWORD": "mempool",
-    "DATABASE": "mempool"
-  },
-  "STATISTICS": {
-    "ENABLED": true,
-    "TX_PER_SECOND_SAMPLE_PERIOD": 150
-  }
-}
-```
-
-Start the backend:
-
-```bash
-  npm run start
-```
-
-When it's running you should see output like this:
-
-```bash
-  Mempool updated in 0.189 seconds
-  Updating mempool
-  Mempool updated in 0.096 seconds
-  Updating mempool
-  Mempool updated in 0.099 seconds
-  Updating mempool
-  Calculated fee for transaction 1 / 10
-  Calculated fee for transaction 2 / 10
-  Calculated fee for transaction 3 / 10
-  Calculated fee for transaction 4 / 10
-  Calculated fee for transaction 5 / 10
-  Calculated fee for transaction 6 / 10
-  Calculated fee for transaction 7 / 10
-  Calculated fee for transaction 8 / 10
-  Calculated fee for transaction 9 / 10
-  Calculated fee for transaction 10 / 10
-  Mempool updated in 0.243 seconds
-  Updating mempool
-```
-
-## Mempool Frontend
-
-Install mempool dependencies from npm and build the frontend static HTML/CSS/JS:
-
-```bash
-  # frontend
-  cd frontend
-  npm install
-  npm run build
-```
-
-Install the output into nginx webroot folder:
-
-```bash
-  sudo rsync -av --delete dist/mempool /var/www/
-```
-
-## nginx + certbot
-
-Install the supplied nginx.conf and nginx-mempool.conf in /etc/nginx
-
-```bash
-  # install nginx and certbot
-  apt-get install -y nginx python-certbot-nginx
-
-  # install the mempool configuration for nginx
-  cp nginx.conf nginx-mempool.conf /etc/nginx/
-
-  # replace example.com with your domain name
-  certbot --nginx -d example.com
-
-```
-
-If everything went okay you should see the beautiful mempool :grin:
-
-If you get stuck on "loading blocks", this means the websocket can't connect.
-Check your nginx proxy setup, firewalls, etc. and open an issue if you need help.
+- See the [`docker/`](./docker/) directory for instructions on deploying Mempool with Docker.
+- See the [`backend/`](./backend/) and [`frontend/`](./frontend/) directories for manual install instructions oriented for developers.
+- See the [`production/`](./production/) directory for guidance on setting up a more serious Mempool instance designed for high performance at scale.

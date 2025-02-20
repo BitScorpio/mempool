@@ -1,147 +1,85 @@
-import { BrowserModule, BrowserTransferStateModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { ModuleWithProviders, NgModule } from '@angular/core';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { InfiniteScrollModule } from 'ngx-infinite-scroll';
-
+import { ZONE_SERVICE } from '@app/injection-tokens';
 import { AppRoutingModule } from './app-routing.module';
-import { AppComponent } from './components/app/app.component';
+import { AppComponent } from '@components/app/app.component';
+import { ElectrsApiService } from '@app/services/electrs-api.service';
+import { OrdApiService } from '@app/services/ord-api.service';
+import { StateService } from '@app/services/state.service';
+import { CacheService } from '@app/services/cache.service';
+import { PriceService } from '@app/services/price.service';
+import { EnterpriseService } from '@app/services/enterprise.service';
+import { WebsocketService } from '@app/services/websocket.service';
+import { AudioService } from '@app/services/audio.service';
+import { PreloadService } from '@app/services/preload.service';
+import { SeoService } from '@app/services/seo.service';
+import { OpenGraphService } from '@app/services/opengraph.service';
+import { ZoneService } from '@app/services/zone-shim.service';
+import { SharedModule } from '@app/shared/shared.module';
+import { StorageService } from '@app/services/storage.service';
+import { HttpCacheInterceptor } from '@app/services/http-cache.interceptor';
+import { LanguageService } from '@app/services/language.service';
+import { ThemeService } from '@app/services/theme.service';
+import { TimeService } from '@app/services/time.service';
+import { FiatShortenerPipe } from '@app/shared/pipes/fiat-shortener.pipe';
+import { FiatCurrencyPipe } from '@app/shared/pipes/fiat-currency.pipe';
+import { ShortenStringPipe } from '@app/shared/pipes/shorten-string-pipe/shorten-string.pipe';
+import { CapAddressPipe } from '@app/shared/pipes/cap-address-pipe/cap-address-pipe';
+import { AppPreloadingStrategy } from '@app/app.preloading-strategy';
+import { ServicesApiServices } from '@app/services/services-api.service';
+import { DatePipe } from '@angular/common';
 
-import { StartComponent } from './components/start/start.component';
-import { ElectrsApiService } from './services/electrs-api.service';
-import { TransactionComponent } from './components/transaction/transaction.component';
-import { TransactionsListComponent } from './components/transactions-list/transactions-list.component';
-import { AmountComponent } from './components/amount/amount.component';
-import { StateService } from './services/state.service';
-import { BlockComponent } from './components/block/block.component';
-import { AddressComponent } from './components/address/address.component';
-import { SearchFormComponent } from './components/search-form/search-form.component';
-import { LatestBlocksComponent } from './components/latest-blocks/latest-blocks.component';
-import { WebsocketService } from './services/websocket.service';
-import { AddressLabelsComponent } from './components/address-labels/address-labels.component';
-import { MempoolBlocksComponent } from './components/mempool-blocks/mempool-blocks.component';
-import { MasterPageComponent } from './components/master-page/master-page.component';
-import { BisqMasterPageComponent } from './components/bisq-master-page/bisq-master-page.component';
-import { AboutComponent } from './components/about/about.component';
-import { TelevisionComponent } from './components/television/television.component';
-import { StatisticsComponent } from './components/statistics/statistics.component';
-import { ChartistComponent } from './components/statistics/chartist.component';
-import { BlockchainBlocksComponent } from './components/blockchain-blocks/blockchain-blocks.component';
-import { BlockchainComponent } from './components/blockchain/blockchain.component';
-import { FooterComponent } from './components/footer/footer.component';
-import { AudioService } from './services/audio.service';
-import { MempoolBlockComponent } from './components/mempool-block/mempool-block.component';
-import { FeeDistributionGraphComponent } from './components/fee-distribution-graph/fee-distribution-graph.component';
-import { TimeSpanComponent } from './components/time-span/time-span.component';
-import { SeoService } from './services/seo.service';
-import { MempoolGraphComponent } from './components/mempool-graph/mempool-graph.component';
-import { AssetComponent } from './components/asset/asset.component';
-import { AssetsComponent } from './assets/assets.component';
-import { StatusViewComponent } from './components/status-view/status-view.component';
-import { MinerComponent } from './components/miner/miner.component';
-import { SharedModule } from './shared/shared.module';
-import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import { FeesBoxComponent } from './components/fees-box/fees-box.component';
-import { DashboardComponent } from './dashboard/dashboard.component';
-import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
-import { faAngleDown, faAngleUp, faBolt, faChartArea, faCogs, faCubes, faDatabase, faExchangeAlt, faInfoCircle,
-  faLink, faList, faSearch, faCaretUp, faCaretDown, faTachometerAlt, faThList, faTint, faTv, faAngleDoubleDown, faSortUp, faAngleDoubleUp, faChevronDown, faFileAlt, faRedoAlt, faArrowAltCircleRight, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
-import { ApiDocsComponent } from './components/api-docs/api-docs.component';
-import { CodeTemplateComponent } from './components/api-docs/code-template.component';
-import { TermsOfServiceComponent } from './components/terms-of-service/terms-of-service.component';
-import { TrademarkPolicyComponent } from './components/trademark-policy/trademark-policy.component';
-import { StorageService } from './services/storage.service';
-import { HttpCacheInterceptor } from './services/http-cache.interceptor';
-import { SponsorComponent } from './components/sponsor/sponsor.component';
+const providers = [
+  ElectrsApiService,
+  OrdApiService,
+  StateService,
+  CacheService,
+  PriceService,
+  WebsocketService,
+  AudioService,
+  SeoService,
+  OpenGraphService,
+  StorageService,
+  EnterpriseService,
+  LanguageService,
+  ThemeService,
+  TimeService,
+  ShortenStringPipe,
+  FiatShortenerPipe,
+  FiatCurrencyPipe,
+  CapAddressPipe,
+  DatePipe,
+  AppPreloadingStrategy,
+  ServicesApiServices,
+  PreloadService,
+  { provide: HTTP_INTERCEPTORS, useClass: HttpCacheInterceptor, multi: true },
+  { provide: ZONE_SERVICE, useClass: ZoneService },
+];
 
 @NgModule({
   declarations: [
     AppComponent,
-    AboutComponent,
-    MasterPageComponent,
-    BisqMasterPageComponent,
-    TelevisionComponent,
-    BlockchainComponent,
-    StartComponent,
-    BlockchainBlocksComponent,
-    StatisticsComponent,
-    TransactionComponent,
-    BlockComponent,
-    TransactionsListComponent,
-    AddressComponent,
-    AmountComponent,
-    LatestBlocksComponent,
-    SearchFormComponent,
-    TimeSpanComponent,
-    AddressLabelsComponent,
-    MempoolBlocksComponent,
-    ChartistComponent,
-    FooterComponent,
-    MempoolBlockComponent,
-    FeeDistributionGraphComponent,
-    MempoolGraphComponent,
-    AssetComponent,
-    AssetsComponent,
-    MinerComponent,
-    StatusViewComponent,
-    FeesBoxComponent,
-    DashboardComponent,
-    ApiDocsComponent,
-    CodeTemplateComponent,
-    TermsOfServiceComponent,
-    TrademarkPolicyComponent,
-    SponsorComponent,
   ],
   imports: [
-    BrowserModule.withServerTransition({ appId: 'serverApp' }),
-    BrowserTransferStateModule,
+    BrowserModule,
     AppRoutingModule,
     HttpClientModule,
     BrowserAnimationsModule,
-    InfiniteScrollModule,
-    NgbTypeaheadModule,
-    FontAwesomeModule,
     SharedModule,
   ],
-  providers: [
-    ElectrsApiService,
-    StateService,
-    WebsocketService,
-    AudioService,
-    SeoService,
-    StorageService,
-    { provide: HTTP_INTERCEPTORS, useClass: HttpCacheInterceptor, multi: true }
-  ],
+  providers: providers,
   bootstrap: [AppComponent]
 })
-export class AppModule {
-  constructor(library: FaIconLibrary) {
-    library.addIcons(faInfoCircle);
-    library.addIcons(faChartArea);
-    library.addIcons(faTv);
-    library.addIcons(faTachometerAlt);
-    library.addIcons(faCubes);
-    library.addIcons(faCogs);
-    library.addIcons(faThList);
-    library.addIcons(faList);
-    library.addIcons(faTachometerAlt);
-    library.addIcons(faDatabase);
-    library.addIcons(faSearch);
-    library.addIcons(faLink);
-    library.addIcons(faBolt);
-    library.addIcons(faTint);
-    library.addIcons(faAngleDown);
-    library.addIcons(faAngleUp);
-    library.addIcons(faExchangeAlt);
-    library.addIcons(faAngleDoubleUp);
-    library.addIcons(faAngleDoubleDown);
-    library.addIcons(faChevronDown);
-    library.addIcons(faFileAlt);
-    library.addIcons(faRedoAlt);
-    library.addIcons(faArrowAltCircleRight);
-    library.addIcons(faExternalLinkAlt);
-    library.addIcons(faSortUp);
-    library.addIcons(faCaretUp);
-    library.addIcons(faCaretDown);
+export class AppModule { }
+
+@NgModule({})
+export class MempoolSharedModule{
+  static forRoot(): ModuleWithProviders<MempoolSharedModule> {
+    return {
+      ngModule: AppModule,
+      providers: providers
+    };
   }
 }

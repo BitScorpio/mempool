@@ -6,9 +6,11 @@ export namespace IEsploraApi {
     size: number;
     weight: number;
     fee: number;
+    sigops?: number;
     vin: Vin[];
     vout: Vout[];
     status: Status;
+    hex?: string;
   }
 
   export interface Recent {
@@ -24,14 +26,16 @@ export namespace IEsploraApi {
     is_coinbase: boolean;
     scriptsig: string;
     scriptsig_asm: string;
-    inner_redeemscript_asm?: string;
-    inner_witnessscript_asm?: string;
+    inner_redeemscript_asm: string;
+    inner_witnessscript_asm: string;
     sequence: any;
-    witness?: string[];
+    witness: string[];
     prevout: Vout | null;
     // Elements
     is_pegin?: boolean;
     issuance?: Issuance;
+    // Custom
+    lazy?: boolean;
   }
 
   interface Issuance {
@@ -50,7 +54,7 @@ export namespace IEsploraApi {
     scriptpubkey: string;
     scriptpubkey_asm: string;
     scriptpubkey_type: string;
-    scriptpubkey_address: string;
+    scriptpubkey_address?: string;
     value: number;
     // Elements
     valuecommitment?: number;
@@ -85,10 +89,19 @@ export namespace IEsploraApi {
     size: number;
     weight: number;
     previousblockhash: string;
+    mediantime: number;
+    stale: boolean;
   }
 
   export interface Address {
     address: string;
+    chain_stats: ChainStats;
+    mempool_stats: MempoolStats;
+    electrum?: boolean;
+  }
+
+  export interface ScriptHash {
+    scripthash: string;
     chain_stats: ChainStats;
     mempool_stats: MempoolStats;
     electrum?: boolean;
@@ -112,9 +125,9 @@ export namespace IEsploraApi {
 
   export interface Outspend {
     spent: boolean;
-    txid: string;
-    vin: number;
-    status: Status;
+    txid?: string;
+    vin?: number;
+    status?: Status;
   }
 
   export interface Asset {
@@ -166,4 +179,11 @@ export namespace IEsploraApi {
     burn_count: number;
   }
 
+  export interface AddressTxSummary {
+    txid: string;
+    value: number;
+    height: number;
+    time: number;
+    tx_position?: number;
+  }
 }

@@ -1,18 +1,19 @@
-import { Component, OnInit, LOCALE_ID, Inject } from '@angular/core';
+import { Component, OnInit, LOCALE_ID, Inject, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { formatDate } from '@angular/common';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { of, merge} from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
-import { OptimizedMempoolStats } from '../../interfaces/node-api.interface';
-import { WebsocketService } from '../../services/websocket.service';
-import { ApiService } from '../../services/api.service';
+import { OptimizedMempoolStats } from '@interfaces/node-api.interface';
+import { WebsocketService } from '@app/services/websocket.service';
+import { ApiService } from '@app/services/api.service';
 
-import * as Chartist from '@mempool/chartist';
-import { StateService } from 'src/app/services/state.service';
-import { SeoService } from 'src/app/services/seo.service';
-import { StorageService } from 'src/app/services/storage.service';
+import { StateService } from '@app/services/state.service';
+import { SeoService } from '@app/services/seo.service';
+import { StorageService } from '@app/services/storage.service';
+import { feeLevels, chartColors } from '@app/app.constants';
+import { MempoolGraphComponent } from '@components/mempool-graph/mempool-graph.component';
+import { IncomingTransactionsGraphComponent } from '@components/incoming-transactions-graph/incoming-transactions-graph.component';
 
 @Component({
   selector: 'app-statistics',
@@ -20,92 +21,64 @@ import { StorageService } from 'src/app/services/storage.service';
   styleUrls: ['./statistics.component.scss']
 })
 export class StatisticsComponent implements OnInit {
+  @ViewChild('mempoolgraph') mempoolGraph: MempoolGraphComponent;
+  @ViewChild('incominggraph') incomingGraph: IncomingTransactionsGraphComponent;
+
   network = '';
 
-  loading = true;
-  spinnerLoading = false;
-
+  isLoading = true;
+  feeLevels = feeLevels;
+  chartColors = chartColors;
+  filterSize = 100000;
+  filterFeeIndex = 1;
+  showCount = false;
+  maxFeeIndex: number;
+  dropDownOpen = false;
+  outlierCappingEnabled = false;
   mempoolStats: OptimizedMempoolStats[] = [];
 
   mempoolVsizeFeesData: any;
   mempoolUnconfirmedTransactionsData: any;
   mempoolTransactionsWeightPerSecondData: any;
 
-  transactionsWeightPerSecondOptions: any;
-
-  radioGroupForm: FormGroup;
+  radioGroupForm: UntypedFormGroup;
+  graphWindowPreference: string;
   inverted: boolean;
-  graphWindowPreference: String;
+  feeLevelDropdownData = [];
+  timespan = '';
+  titleCount = $localize`Count`;
 
   constructor(
     @Inject(LOCALE_ID) private locale: string,
-    private formBuilder: FormBuilder,
+    private formBuilder: UntypedFormBuilder,
     private route: ActivatedRoute,
     private websocketService: WebsocketService,
     private apiService: ApiService,
-    private stateService: StateService,
+    public stateService: StateService,
     private seoService: SeoService,
     private storageService: StorageService,
   ) { }
 
   ngOnInit() {
-    this.seoService.setTitle($localize`:@@5d4f792f048fcaa6df5948575d7cb325c9393383:Graphs`);
-    this.stateService.networkChanged$.subscribe((network) => this.network = network);
     this.inverted = this.storageService.getValue('inverted-graph') === 'true';
+    this.setFeeLevelDropdownData();
+    this.seoService.setTitle($localize`:@@5d4f792f048fcaa6df5948575d7cb325c9393383:Graphs`);
+    this.seoService.setDescription($localize`:@@meta.description.bitcoin.graphs.mempool:See mempool size (in MvB) and transactions per second (in vB/s) visualized over time.`);
+    this.stateService.networkChanged$.subscribe((network) => this.network = network);
     this.graphWindowPreference = this.storageService.getValue('graphWindowPreference') ? this.storageService.getValue('graphWindowPreference').trim() : '2h';
-    const isMobile = window.innerWidth <= 767.98;
-    let labelHops = isMobile ? 48 : 24;
-
-    if (isMobile) {
-      labelHops = 96;
-    }
+    this.outlierCappingEnabled = this.storageService.getValue('cap-outliers') === 'true';
 
     this.radioGroupForm = this.formBuilder.group({
       dateSpan: this.graphWindowPreference
     });
 
-    const labelInterpolationFnc = (value: any, index: any) => {
-      switch (this.graphWindowPreference) {
-        case '2h':
-        case '24h':
-          value = formatDate(value, 'HH:mm', this.locale);
-          break;
-        case '1w':
-          value = formatDate(value, 'dd/MM HH:mm', this.locale);
-          break;
-        case '1m':
-        case '3m':
-        case '6m':
-        case '1y':
-          value = formatDate(value, 'dd/MM', this.locale);
-      }
-
-      return index % labelHops === 0 ? value : null;
-    };
-
-    this.transactionsWeightPerSecondOptions = {
-      showArea: false,
-      showLine: true,
-      showPoint: false,
-      low: 0,
-      axisY: {
-        offset: 40
-      },
-      axisX: {
-        labelInterpolationFnc: labelInterpolationFnc
-      },
-      plugins: [
-        Chartist.plugins.ctTargetLine({
-          value: 1667
-        }),
-      ]
-    };
-
     this.route
       .fragment
       .subscribe((fragment) => {
-        if (['2h', '24h', '1w', '1m', '3m', '6m', '1y'].indexOf(fragment) > -1) {
+        if (['2h', '24h', '1w', '1m', '3m', '6m', '1y', '2y', '3y', '4y', 'all'].indexOf(fragment) > -1) {
           this.radioGroupForm.controls.dateSpan.setValue(fragment, { emitEvent: false });
+        } else {
+          this.radioGroupForm.controls.dateSpan.setValue('2h', { emitEvent: false });
         }
       });
 
@@ -115,7 +88,8 @@ export class StatisticsComponent implements OnInit {
     )
     .pipe(
       switchMap(() => {
-        this.spinnerLoading = true;
+        this.timespan = this.radioGroupForm.controls.dateSpan.value;
+        this.isLoading = true;
         if (this.radioGroupForm.controls.dateSpan.value === '2h') {
           this.websocketService.want(['blocks', 'live-2h-chart']);
           return this.apiService.list2HStatistics$();
@@ -136,14 +110,27 @@ export class StatisticsComponent implements OnInit {
         if (this.radioGroupForm.controls.dateSpan.value === '6m') {
           return this.apiService.list6MStatistics$();
         }
-        return this.apiService.list1YStatistics$();
+        if (this.radioGroupForm.controls.dateSpan.value === '1y') {
+          return this.apiService.list1YStatistics$();
+        }
+        if (this.radioGroupForm.controls.dateSpan.value === '2y') {
+          return this.apiService.list2YStatistics$();
+        }
+        if (this.radioGroupForm.controls.dateSpan.value === '3y') {
+          return this.apiService.list3YStatistics$();
+        }
+        if (this.radioGroupForm.controls.dateSpan.value === '4y') {
+          return this.apiService.list4YStatistics$();
+        }
+        if (this.radioGroupForm.controls.dateSpan.value === 'all') {
+          return this.apiService.listAllTimeStatistics$();
+        }
       })
     )
     .subscribe((mempoolStats: any) => {
       this.mempoolStats = mempoolStats;
       this.handleNewMempoolData(this.mempoolStats.concat([]));
-      this.loading = false;
-      this.spinnerLoading = false;
+      this.isLoading = false;
     });
 
     this.stateService.live2Chart$
@@ -158,10 +145,24 @@ export class StatisticsComponent implements OnInit {
     mempoolStats.reverse();
     const labels = mempoolStats.map(stats => stats.added);
 
+    let maxTier = 0;
+    for (let index = 37; index > -1; index--) {
+      mempoolStats.forEach((stats) => {
+        if (stats.vsizes[index] >= this.filterSize) {
+          maxTier = Math.max(maxTier, index);
+        }
+      });
+    }
+    this.maxFeeIndex = maxTier;
+
     this.mempoolTransactionsWeightPerSecondData = {
       labels: labels,
-      series: [mempoolStats.map((stats) => stats.vbytes_per_second)],
+      series: [mempoolStats.map((stats) => [stats.added * 1000, stats.vbytes_per_second])],
     };
+  }
+
+  saveGraphPreference() {
+    this.storageService.setValue('graphWindowPreference', this.radioGroupForm.controls.dateSpan.value);
   }
 
   invertGraph() {
@@ -169,7 +170,59 @@ export class StatisticsComponent implements OnInit {
     document.location.reload();
   }
 
-  saveGraphPreference() {
-    this.storageService.setValue('graphWindowPreference', this.radioGroupForm.controls.dateSpan.value);
+  setFeeLevelDropdownData() {
+    let _feeLevels = feeLevels;
+    let _chartColors = chartColors;
+    if (!this.inverted) {
+      _feeLevels = [...feeLevels].reverse();
+      _chartColors = [...chartColors].reverse();
+    }
+    _feeLevels.forEach((fee, i) => {
+      let range;
+      const nextIndex = this.inverted ? i + 1 : i - 1;
+      if (this.stateService.isLiquid()) {
+        if (_feeLevels[nextIndex] == null) {
+          range = `${(_feeLevels[i] / 10).toFixed(1)}+`;
+        } else {
+          range = `${(_feeLevels[i] / 10).toFixed(1)} - ${(_feeLevels[nextIndex] / 10).toFixed(1)}`;
+        }
+      } else {
+        if (_feeLevels[nextIndex] == null) {
+          range = `${_feeLevels[i]}+`;
+        } else {
+          range = `${_feeLevels[i]} - ${_feeLevels[nextIndex]}`;
+        }
+      }
+      if (this.inverted) {
+        this.feeLevelDropdownData.push({
+          fee: fee,
+          range,
+          color: _chartColors[i],
+        });
+      } else {
+        this.feeLevelDropdownData.push({
+          fee: fee,
+          range,
+          color: _chartColors[i],
+        });
+      }
+    });
+  }
+  
+  onOutlierToggleChange(e): void {
+    this.outlierCappingEnabled = e.target.checked;
+    this.storageService.setValue('cap-outliers', e.target.checked);
+  }
+
+  onSaveChart(name) {
+    if (name === 'mempool') {
+      this.mempoolGraph.onSaveChart(this.timespan);
+    } else if (name === 'incoming') {
+      this.incomingGraph.onSaveChart(this.timespan);
+    }
+  }
+
+  isMobile() {
+    return (window.innerWidth <= 767.98);
   }
 }

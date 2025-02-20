@@ -31,18 +31,25 @@ export const mockWebSocket = () => {
 	cy.on('window:before:load', (win) => {
 		const winWebSocket = win.WebSocket;
 		cy.stub(win, 'WebSocket').callsFake((url) => {
-            console.log(url);
+			console.log(url);
 			if ((new URL(url).pathname.indexOf('/sockjs-node/') !== 0)) {
 				const { server, websocket } = createMock(url);
 
 				win.mockServer = server;
 				win.mockServer.on('connection', (socket) => {
 					win.mockSocket = socket;
+					win.mockSocket.send('{"conversions":{"USD":32365.338815782445}}');
+					cy.readFile('cypress/fixtures/mainnet_live2hchart.json', 'ascii').then((fixture) => {
+						win.mockSocket.send(JSON.stringify(fixture));
+					});
+					cy.readFile('cypress/fixtures/mainnet_mempoolInfo.json', 'ascii').then((fixture) => {
+						win.mockSocket.send(JSON.stringify(fixture));
+					});
 				});
 
-                win.mockServer.on('message', (message) => {
-                    console.log(message);
-                });
+				win.mockServer.on('message', (message) => {
+					console.log(message);
+				});
 
 				return websocket;
 			} else {
@@ -67,18 +74,39 @@ export const emitMempoolInfo = ({
 			//TODO: Use network specific mocks
 			case "signet":
 			case "testnet":
+			case "mainnet":
 			default:
-				win.mockSocket.send('{"action":"init"}');
-				win.mockSocket.send('{"action":"want","data":["blocks","stats","mempool-blocks","live-2h-chart"]}');
-				cy.readFile('cypress/fixtures/mainnet_mempoolInfo.json', 'ascii').then((fixture) => {
-					win.mockSocket.send(JSON.stringify(fixture));
-				});
+				break;
+		}
+
+		switch (params.command) {
+			case "init": {
 				win.mockSocket.send('{"conversions":{"USD":32365.338815782445}}');
 				cy.readFile('cypress/fixtures/mainnet_live2hchart.json', 'ascii').then((fixture) => {
 					win.mockSocket.send(JSON.stringify(fixture));
 				});
+				cy.readFile('cypress/fixtures/mainnet_mempoolInfo.json', 'ascii').then((fixture) => {
+					win.mockSocket.send(JSON.stringify(fixture));
+				});
+				break;
+			}
+			case "rbfTransaction": {
+				cy.readFile('cypress/fixtures/mainnet_rbf.json', 'ascii').then((fixture) => {
+					win.mockSocket.send(JSON.stringify(fixture));
+				});
+				break;
+			}
+			default:
+				break;
 		}
 	});
     cy.waitForSkeletonGone();
     return cy.get('#mempool-block-0');
 };
+
+export const dropWebSocket = (() => {
+    cy.window().then((win) => {
+        win.mockServer.simulate("error");
+    });
+    return cy.wait(500);
+});

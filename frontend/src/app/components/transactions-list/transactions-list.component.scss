@@ -1,25 +1,27 @@
 
 .arrow-td {
-	width: 20px;
+	width: 30px;
+	padding-top: 0;
+	padding-bottom: 0;
 }
 .green, .grey, .red {
 	font-size: 16px;
-    top: -2px;
+  top: 1px;
 	position: relative;
 	@media( min-width: 576px){
 		font-size: 19px;
 	}
 }
 .green {
-  	color:#28a745;
+  color: var(--green);
 }
 
 .red {
-  	color:#dc3545;
+  color: var(--red);
 }
 
 .grey {
-  	color:#6c757d;
+  color: var(--grey);
 }
 
 .mobile-bottomcol {
@@ -43,7 +45,20 @@
 	}
 }
 
-.extra-info {	
+td.amount {
+	width: 36%;
+	@media (max-width: 576px) {
+		width: 50%;
+	}
+}
+td.amount.large {
+	width: 45%;
+	@media (max-width: 576px) {
+		width: 60%;
+	}
+}
+
+.extra-info {
 	display: none;
 	@media (min-width: 576px) {
 		display: inline-table;
@@ -54,7 +69,7 @@
 		text-align: right;
 	}
 	.sats {
-		color: #ffffff66;
+		color: var(--transparent-fg);
 		font-size: 11px;
 	}
 }
@@ -75,16 +90,21 @@
 	}
 }
 .fiat {
-	margin-left: 10px; 
+	margin-left: 10px;
 }
 
 .tx-page-container {
-	padding: 10px; 
+	display: flex;
+	flex-direction: row;
+	align-items: baseline;
+	white-space: nowrap;
+	padding: 10px;
 	margin-bottom: 10px;
 	margin-top: 10px;
 }
 .assetBox {
-	background-color: #653b9c90;
+	background: color-mix(in srgb, var(--tertiary) 56%, transparent);
+
 }
 
 .details-container {
@@ -93,11 +113,9 @@
 		padding: 0.75rem;
 		font-size: 12px;
 		&:first-child {
-			color: #ffffff66;
+			color: var(--transparent-fg);
 			white-space: pre-wrap;
-			@media (min-width: 476px) {
-				white-space: nowrap;
-			}
+			width: 150px;
 		}
 		&:nth-child(2) {
 			word-break: break-all;
@@ -112,6 +130,60 @@
 	width: 100%;
 	color: #d43131;
 	text-align: right;
-    margin-top: 0px;
-    margin-bottom: 10px;
+  margin-top: 0px;
+  margin-bottom: 10px;
+}
+
+h2 {
+  line-height: 1;
+}
+
+.highlight {
+	background-color: var(--stat-box-bg);
+}
+
+.summary {
+	margin-top: 10px;
+}
+
+.address {
+	font-family: monospace;
+}
+
+.p2pk-address {
+	display: inline-block;
+	margin-left: 1em;
+	max-width: 100px;
+	@media (min-width: 576px) {
+		max-width: 200px
+	}
+}
+
+.grey-info-text {
+	color: var(--grey);
+	font-style: italic;
+	font-size: 12px;
+}
+
+.tx-link {
+	width: 0;
+	flex-grow: 1;
+	margin-inline-end: 2em;
+}
+
+.vin-witness {
+	.witness-item {
+		overflow: hidden;	
+	}
+}
+
+.badge-ord {
+	background-color: var(--grey);
+	position: relative;
+	top: -2px;
+	font-size: 81%;
+	border: 0;
+	&.primary {
+		background-color: var(--primary);
+	}
 }

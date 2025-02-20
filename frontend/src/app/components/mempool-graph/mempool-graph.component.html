@@ -1,6 +1,5 @@
-<app-chartist
-  *ngIf="mempoolVsizeFeesData"
-  [data]="mempoolVsizeFeesData"
-  [type]="'Line'"
-  [options]="mempoolVsizeFeesOptions">
-</app-chartist>
+<div *browserOnly echarts class="echarts" (chartInit)="onChartReady($event)" (chartRendered)="rendered()" [initOpts]="mempoolVsizeFeesInitOptions" 
+  [options]="mempoolVsizeFeesOptions" [style]="{opacity: isLoading ? 0.5 : 1}"></div>
+<div class="text-center loadingGraphs" *ngIf="!stateService.isBrowser || isLoading">
+  <div class="spinner-border text-light"></div>
+</div>

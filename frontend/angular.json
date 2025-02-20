@@ -1,5 +1,8 @@
 {
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "cli": {
+    "analytics": false
+  },
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
@@ -23,6 +26,10 @@
             "translation": "src/locale/messages.ar.xlf",
             "baseHref": "/ar/"
           },
+          "ca": {
+            "translation": "src/locale/messages.ca.xlf",
+            "baseHref": "/ca/"
+          },
           "cs": {
             "translation": "src/locale/messages.cs.xlf",
             "baseHref": "/cs/"
@@ -30,6 +37,10 @@
           "de": {
             "translation": "src/locale/messages.de.xlf",
             "baseHref": "/de/"
+          },
+          "da": {
+            "translation": "src/locale/messages.da.xlf",
+            "baseHref": "/da/"
           },
           "es": {
             "translation": "src/locale/messages.es.xlf",
@@ -42,6 +53,10 @@
           "fr": {
             "translation": "src/locale/messages.fr.xlf",
             "baseHref": "/fr/"
+          },
+          "hr": {
+            "translation": "src/locale/messages.hr.xlf",
+            "baseHref": "/hr/"
           },
           "ja": {
             "translation": "src/locale/messages.ja.xlf",
@@ -87,6 +102,10 @@
             "translation": "src/locale/messages.sv.xlf",
             "baseHref": "/sv/"
           },
+          "th": {
+            "translation": "src/locale/messages.th.xlf",
+            "baseHref": "/th/"
+          },
           "tr": {
             "translation": "src/locale/messages.tr.xlf",
             "baseHref": "/tr/"
@@ -107,9 +126,17 @@
             "translation": "src/locale/messages.hu.xlf",
             "baseHref": "/hu/"
           },
+          "mk": {
+            "translation": "src/locale/messages.mk.xlf",
+            "baseHref": "/mk/"
+          },
           "zh": {
             "translation": "src/locale/messages.zh.xlf",
             "baseHref": "/zh/"
+          },
+          "ro": {
+            "translation": "src/locale/messages.ro.xlf",
+            "baseHref": "/ro/"
           },
           "ru": {
             "translation": "src/locale/messages.ru.xlf",
@@ -118,6 +145,14 @@
           "hi": {
             "translation": "src/locale/messages.hi.xlf",
             "baseHref": "/hi/"
+          },
+          "ne": {
+            "translation": "src/locale/messages.ne.xlf",
+            "baseHref": "/ne/"
+          },
+          "lt": {
+            "translation": "src/locale/messages.lt.xlf",
+            "baseHref": "/lt/"
           }
         }
       },
@@ -130,29 +165,60 @@
             "main": "src/main.ts",
             "polyfills": "src/polyfills.ts",
             "tsConfig": "tsconfig.app.json",
-            "aot": true,
             "assets": [
               "src/favicon.ico",
               "src/resources",
-              "src/robots.txt"
+              "src/robots.txt",
+              "src/config.js",
+              "src/customize.js",
+              "src/config.template.js"
             ],
             "styles": [
               "src/styles.scss",
+              {
+                "input": "src/theme-contrast.scss",
+                "bundleName": "contrast",
+                "inject": false
+              },
+              {
+                "input": "src/theme-wiz.scss",
+                "bundleName": "wiz",
+                "inject": false
+              },
+              {
+                "input": "src/theme-bukele.scss",
+                "bundleName": "bukele",
+                "inject": false
+              },
               "node_modules/@fortawesome/fontawesome-svg-core/styles.css"
             ],
-            "scripts": [
-              "generated-config.js"
-            ]
+            "vendorChunk": true,
+            "extractLicenses": false,
+            "buildOptimizer": false,
+            "sourceMap": true,
+            "optimization": false,
+            "namedChunks": true
           },
           "configurations": {
             "production": {
+              "assets": [
+                "src/favicon.ico",
+                "src/robots.txt"
+              ],
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.prod.ts"
                 }
               ],
-              "optimization": true,
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "fonts": true
+              },
               "outputHashing": "all",
               "sourceMap": false,
               "namedChunks": false,
@@ -171,70 +237,54 @@
                 }
               ]
             }
-          }
+          },
+          "defaultConfiguration": ""
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "mempool:build"
+            "buildTarget": "mempool:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "mempool:build:production"
+              "buildTarget": "mempool:build:production"
             },
             "local": {
-              "proxyConfig": "proxy.conf.json",
+              "proxyConfig": "proxy.conf.local.js",
+              "verbose": true
+            },
+            "local-esplora": {
+              "proxyConfig": "proxy.conf.local-esplora.js",
+              "verbose": true
+            },
+            "mixed": {
+              "proxyConfig": "proxy.conf.mixed.js",
               "verbose": true
             },
             "staging": {
-              "proxyConfig": "proxy.stg.conf.json",
+              "proxyConfig": "proxy.conf.js",
               "disableHostCheck": true,
               "host": "0.0.0.0",
               "verbose": true
             },
             "local-prod": {
-              "proxyConfig": "proxy.prod.conf.json",
+              "proxyConfig": "proxy.conf.js",
               "disableHostCheck": true,
               "host": "0.0.0.0",
-              "verbose": true
+              "verbose": false
+            },
+            "local-staging": {
+              "proxyConfig": "proxy.conf.staging.js",
+              "disableHostCheck": true,
+              "host": "0.0.0.0",
+              "verbose": false
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "mempool:build"
-          }
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "main": "src/test.ts",
-            "polyfills": "src/polyfills.ts",
-            "tsConfig": "tsconfig.spec.json",
-            "karmaConfig": "karma.conf.js",
-            "assets": [
-              "src/favicon.ico",
-              "src/resources"
-            ],
-            "styles": [
-              "src/styles.scss"
-            ],
-            "scripts": []
-          }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": [
-              "tsconfig.app.json",
-              "tsconfig.spec.json",
-              "tsconfig.server.json",
-              "cypress/tsconfig.json"
-            ],
-            "exclude": [
-              "**/node_modules/**"
-            ]
+            "buildTarget": "mempool:build"
           }
         },
         "e2e": {
@@ -268,12 +318,12 @@
               ],
               "sourceMap": false,
               "localize": true,
-              "optimization": true
+              "optimization": false
             }
           }
         },
         "serve-ssr": {
-          "builder": "@nguniversal/builders:ssr-dev-server",
+          "builder": "@angular-devkit/build-angular:ssr-dev-server",
           "options": {
             "browserTarget": "mempool:build",
             "serverTarget": "mempool:server"
@@ -281,12 +331,14 @@
           "configurations": {
             "production": {
               "browserTarget": "mempool:build:production",
-              "serverTarget": "mempool:server:production"
+              "serverTarget": "mempool:server:production",
+              "optimization": false,
+              "sourceMap": true
             }
           }
         },
         "prerender": {
-          "builder": "@nguniversal/builders:prerender",
+          "builder": "@angular-devkit/build-angular:prerender",
           "options": {
             "browserTarget": "mempool:build:production",
             "serverTarget": "mempool:server:production",
@@ -318,6 +370,5 @@
         }
       }
     }
-  },
-  "defaultProject": "mempool"
+  }
 }

@@ -16,47 +16,31 @@
 }
 
 .chart-holder {
-  height: calc(100vh - 270px);
-  min-height: 525px;
-  padding-left: 20px;
-  width: 98.5%;
-  padding-top: 20px;
-  @media(min-width: 992px){
-    padding-top: 10px;
-  }
-  @media(min-height: 800px){
-    padding-top: 60px !important;
-  }
+  position: relative;
+  height: 655px;
+  width: 100%;
+  margin: 30px auto 0;
 }
 
 .blockchain-wrapper {
-
-  display: flex;
+  display: block;
   height: 100%;
   min-height: 240px;
   position: relative;
-  top: -20px;
-  @media(min-height: 800px) {
-    top: 10px;
-  }
-  
+  top: 30px;
+
   .position-container {
     position: absolute;
-    left: 50%;
+    left: 0;
     bottom: 170px;
-  }
-
-  .chart-holder {
-    height: calc(100% - 220px);
+    transform: translateX(50vw);
   }
 
   #divider {
-    width: 3px;
+    width: 2px;
     height: 175px;
     left: 0;
     top: -40px;
-    background-image: url('/resources/divider-new.png');
-    background-repeat: repeat-y;
     position: absolute;
     img {
       position: absolute;
@@ -65,23 +49,24 @@
     }
   }
 
-  @media (min-width: 1920px) {
-    .position-container {
-      transform: scale(1.3);
-      bottom: 210px;
-    }
-    .chart-holder {
-      height: calc(100% - 280px);
+  &.time-ltr {
+    .blocks-wrapper {
+      transform: scaleX(-1);
     }
   }
-
 }
-:host ::ng-deep .ct-legend {
-  top: 20px !important;
-  display: flex;
-  flex-direction: column-reverse;
-  @media(min-height: 800px){
-    padding-top: 40px !important;
+
+:host-context(.ltr-layout) {
+  .blockchain-wrapper.time-ltr .blocks-wrapper,
+  .blockchain-wrapper .blocks-wrapper {
+    direction: ltr;
+  }
+}
+
+:host-context(.rtl-layout) {
+  .blockchain-wrapper.time-ltr .blocks-wrapper,
+  .blockchain-wrapper .blocks-wrapper {
+    direction: rtl;
   }
 }
 
@@ -89,9 +74,7 @@
   display: flex;
   margin-top: 0px;
   flex-direction: column;
-  @media(max-height: 700px) {
-    .blockchain-wrapper{
-      display: none !important;
-    }
-  }
 }
+
+
+
